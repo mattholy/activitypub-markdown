@@ -135,5 +135,5 @@ interface customRenderers {
     inlineMath?: (node: InlineMathNode) => VNode;
     math?: (node: MathNode) => VNode;
 }
-export type { RenderedNode, RenderOptions, customComponents };
+export type { RenderedNode, RenderOptions, customComponents, MentionNode };
 export declare function renderAst2Vue(ast: Node, options?: RenderOptions): VNode[];

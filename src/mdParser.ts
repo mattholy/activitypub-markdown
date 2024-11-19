@@ -1,83 +1,85 @@
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
-import remarkMath from 'remark-math'
-import remarkGfm from 'remark-gfm'
-import { Node } from 'unist'
-import { visit, SKIP } from 'unist-util-visit'
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import { Node } from 'unist';
+import { visit } from 'unist-util-visit';
+import { MentionNode } from './renderAST2Vue'
 
-function mentionPlugin() {
+function activityPubPlugin(options?: activityPubPlugin) {
+  const { doNotParseActivityPubMention } = options || {};
+  const mentionRegex = /@[\w.-]+(?:@(?:[\w-]+\.)+[a-zA-Z]{2,})?/g;
+
   return (tree: Node) => {
-    visit(tree, 'text', (node: any, index: number, parent: any) => {
-      if (parent.type === 'link') {
-        return
-      }
+    if (!doNotParseActivityPubMention) {
+      visit(tree, 'text', (node: MentionNode, index, parent) => {
+        if (!parent || !node.value || typeof node.value !== 'string') return;
 
-      const mentionRegex = /@[\w.-]+(?:@(?:[\w-]+\.)+[a-zA-Z]{2,})?/g
-      let match
-      let lastIndex = 0
-      const newNodes = []
+        let newChildren: Node[] = [];
+        let remainingText = node.value;
+        let match;
 
-      while ((match = mentionRegex.exec(node.value)) !== null) {
-        const isEmail = node.value.slice(Math.max(0, match.index - 7), match.index).toLowerCase() === 'mailto:'
-        if (match.index > lastIndex) {
-          newNodes.push({
-            type: 'text',
-            value: node.value.slice(lastIndex, match.index),
-          })
-        }
-        if (!isEmail) {
-          newNodes.push({
+        while ((match = mentionRegex.exec(remainingText)) !== null) {
+          const mention = match[0];
+          const start = match.index;
+          const end = mentionRegex.lastIndex;
+
+          // Push text before the mention
+          if (start > 0) {
+            newChildren.push({
+              type: 'text',
+              value: remainingText.slice(0, start),
+            });
+          }
+
+          // Create a mention node
+          newChildren.push({
             type: 'mention',
-            value: match[0],
-          })
-        } else {
-          newNodes.push({
-            type: 'text',
-            value: match[0],
-          })
+            value: mention,
+            data: {
+              hName: 'span',
+              hProperties: { className: ['mention'] },
+            },
+          });
+
+          // Update remaining text
+          remainingText = remainingText.slice(end);
+          mentionRegex.lastIndex = 0; // Reset regex state
         }
-        lastIndex = match.index + match[0].length
-      }
 
-      if (lastIndex < node.value.length) {
-        newNodes.push({
-          type: 'text',
-          value: node.value.slice(lastIndex),
-        })
-      }
+        // Push any remaining text as a text node
+        if (remainingText) {
+          newChildren.push({
+            type: 'text',
+            value: remainingText,
+          });
+        }
 
-      if (newNodes.length > 0) {
-        parent.children.splice(index, 1, ...newNodes)
-        return [SKIP, index + newNodes.length]
-      }
-    })
-  }
+        // Replace original node with new nodes if matches were found
+        if (newChildren.length > 0) {
+          parent.children.splice(index as number, 1, ...newChildren);
+        }
+      });
+    }
+  };
 }
 
+interface activityPubPlugin {
+  doNotParseActivityPubMention?: boolean;
+}
 
 export type parseOptions = {
-  doNotParseActivityPubMention?: boolean
-}
+  activityPubPlugin?: activityPubPlugin;
+};
 
 export function parseMarkdown(markdownText: string, parseOptions?: parseOptions): Node {
   const processor = unified()
     .use(remarkParse)
     .use(remarkMath)
-    .use(remarkGfm)
-    .use(mentionPlugin)
+    .use(activityPubPlugin, parseOptions?.activityPubPlugin)
+    .use(remarkGfm);
 
-  const ast = processor.parse(markdownText)
-
-  const processedAst = processor.runSync(ast)
-  console.log('已经解析的树：', processedAst)
-  console.log('解析的选项：', parseOptions)
-  if (!parseOptions?.doNotParseActivityPubMention) {
-    console.log('解析ActivityPub Mention')
-    visit(processedAst, 'link', (node: Node) => {
-      console.log('link node:', node.data)
-      node.data
-    })
-
-  }
-  return processedAst
+  const ast = processor.parse(markdownText);
+  const processedAst = processor.runSync(ast);
+  return processedAst;
 }

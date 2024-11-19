@@ -2,8 +2,156 @@ import { h, VNode } from 'vue'
 import { Node } from 'unist'
 import 'katex/dist/katex.min.css'
 import katex from 'katex'
-import * as nodeTypes from './types/nodeTypes'
-import { RenderedNode } from './types/nodeTypes'
+
+interface RootNode extends Node {
+    type: 'root'
+    children: RenderedNode[]
+}
+
+interface ParagraphNode extends Node {
+    type: 'paragraph'
+    children: RenderedNode[]
+}
+
+interface TextNode extends Node {
+    type: 'text'
+    value: string
+}
+
+interface HeadingNode extends Node {
+    type: 'heading'
+    depth: number
+    children: RenderedNode[]
+}
+
+interface EmphasisNode extends Node {
+    type: 'emphasis'
+    children: RenderedNode[]
+}
+
+interface StrongNode extends Node {
+    type: 'strong'
+    children: RenderedNode[]
+}
+
+interface InlineCodeNode extends Node {
+    type: 'inlineCode'
+    value: string
+}
+
+interface CodeNode extends Node {
+    type: 'code'
+    value: string
+    lang?: string
+}
+
+interface BlockquoteNode extends Node {
+    type: 'blockquote'
+    children: RenderedNode[]
+}
+
+interface ListNode extends Node {
+    type: 'list'
+    ordered: boolean
+    start?: number
+    spread?: boolean
+    children: RenderedNode[]
+}
+
+interface ListItemNode extends Node {
+    type: 'listItem'
+    spread?: boolean
+    checked?: boolean | null
+    children: RenderedNode[]
+}
+
+interface ThematicBreakNode extends Node {
+    type: 'thematicBreak'
+}
+
+interface BreakNode extends Node {
+    type: 'break'
+}
+
+interface LinkNode extends Node {
+    type: 'link'
+    url: string
+    title?: string
+    children: RenderedNode[]
+}
+
+interface ImageNode extends Node {
+    type: 'image'
+    url: string
+    title?: string
+    alt?: string
+}
+
+interface TableNode extends Node {
+    type: 'table'
+    align: Array<'left' | 'center' | 'right' | null>
+    children: TableRowNode[]
+}
+
+interface TableRowNode extends Node {
+    type: 'tableRow'
+    children: TableCellNode[]
+}
+
+interface TableCellNode extends Node {
+    type: 'tableCell'
+    children: RenderedNode[]
+}
+
+interface DeleteNode extends Node {
+    type: 'delete'
+    children: RenderedNode[]
+}
+
+interface HTMLNode extends Node {
+    type: 'html'
+    value: string
+}
+
+interface MentionNode extends Node {
+    type: 'mention'
+    value: string
+}
+
+interface InlineMathNode extends Node {
+    type: 'inlineMath'
+    value: string
+}
+
+interface MathNode extends Node {
+    type: 'math'
+    value: string
+}
+
+type RenderedNode =
+    | RootNode
+    | ParagraphNode
+    | TextNode
+    | HeadingNode
+    | EmphasisNode
+    | StrongNode
+    | InlineCodeNode
+    | CodeNode
+    | BlockquoteNode
+    | ListNode
+    | ListItemNode
+    | ThematicBreakNode
+    | BreakNode
+    | LinkNode
+    | ImageNode
+    | TableNode
+    | TableRowNode
+    | TableCellNode
+    | DeleteNode
+    | HTMLNode
+    | MentionNode
+    | InlineMathNode
+    | MathNode
 
 interface RenderOptions {
     customComponents?: customComponents
@@ -14,32 +162,32 @@ interface customComponents {
 }
 
 interface customRenderers {
-    root?: (node: nodeTypes.RootNode) => VNode
-    text?: (node: nodeTypes.TextNode) => VNode
-    paragraph?: (node: nodeTypes.ParagraphNode) => VNode
-    heading?: (node: nodeTypes.HeadingNode) => VNode
-    emphasis?: (node: nodeTypes.EmphasisNode) => VNode
-    strong?: (node: nodeTypes.StrongNode) => VNode
-    inlineCode?: (node: nodeTypes.InlineCodeNode) => VNode
-    code?: (node: nodeTypes.CodeNode) => VNode
-    blockquote?: (node: nodeTypes.BlockquoteNode) => VNode
-    list?: (node: nodeTypes.ListNode) => VNode
-    listItem?: (node: nodeTypes.ListItemNode) => VNode
-    thematicBreak?: (node: nodeTypes.ThematicBreakNode) => VNode
-    break?: (node: nodeTypes.BreakNode) => VNode
-    link?: (node: nodeTypes.LinkNode) => VNode
-    image?: (node: nodeTypes.ImageNode) => VNode
-    table?: (node: nodeTypes.TableNode) => VNode
-    tableRow?: (node: nodeTypes.TableRowNode) => VNode
-    tableCell?: (node: nodeTypes.TableCellNode) => VNode
-    delete?: (node: nodeTypes.DeleteNode) => VNode
-    html?: (node: nodeTypes.HTMLNode) => VNode
-    mention?: (node: nodeTypes.MentionNode) => VNode
-    inlineMath?: (node: nodeTypes.InlineMathNode) => VNode
-    math?: (node: nodeTypes.MathNode) => VNode
+    root?: (node: RootNode) => VNode
+    text?: (node: TextNode) => VNode
+    paragraph?: (node: ParagraphNode) => VNode
+    heading?: (node: HeadingNode) => VNode
+    emphasis?: (node: EmphasisNode) => VNode
+    strong?: (node: StrongNode) => VNode
+    inlineCode?: (node: InlineCodeNode) => VNode
+    code?: (node: CodeNode) => VNode
+    blockquote?: (node: BlockquoteNode) => VNode
+    list?: (node: ListNode) => VNode
+    listItem?: (node: ListItemNode) => VNode
+    thematicBreak?: (node: ThematicBreakNode) => VNode
+    break?: (node: BreakNode) => VNode
+    link?: (node: LinkNode) => VNode
+    image?: (node: ImageNode) => VNode
+    table?: (node: TableNode) => VNode
+    tableRow?: (node: TableRowNode) => VNode
+    tableCell?: (node: TableCellNode) => VNode
+    delete?: (node: DeleteNode) => VNode
+    html?: (node: HTMLNode) => VNode
+    mention?: (node: MentionNode) => VNode
+    inlineMath?: (node: InlineMathNode) => VNode
+    math?: (node: MathNode) => VNode
 }
 
-export type { RenderedNode, RenderOptions, customComponents }
+export type { RenderedNode, RenderOptions, customComponents, MentionNode }
 
 export function renderAst2Vue(ast: Node, options?: RenderOptions): VNode[] {
     function renderNode(node: RenderedNode, customRenderers?: customRenderers, customComponents?: customComponents): VNode | VNode[] {

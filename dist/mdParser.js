@@ -48,7 +48,7 @@ function mentionPlugin() {
         });
     };
 }
-export function parseMarkdown(markdownText) {
+export function parseMarkdown(markdownText, parseOptions) {
     const processor = unified()
         .use(remarkParse)
         .use(remarkMath)
@@ -56,5 +56,14 @@ export function parseMarkdown(markdownText) {
         .use(mentionPlugin);
     const ast = processor.parse(markdownText);
     const processedAst = processor.runSync(ast);
+    console.log('已经解析的树：', processedAst);
+    console.log('解析的选项：', parseOptions);
+    if (!parseOptions?.doNotParseActivityPubMention) {
+        console.log('解析ActivityPub Mention');
+        visit(processedAst, 'link', (node) => {
+            console.log('link node:', node.data);
+            node.data;
+        });
+    }
     return processedAst;
 }

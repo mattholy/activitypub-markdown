@@ -1,2 +1,5 @@
 import { Node } from 'unist';
-export declare function parseMarkdown(markdownText: string): Node;
+export type parseOptions = {
+    doNotParseActivityPubMention?: boolean;
+};
+export declare function parseMarkdown(markdownText: string, parseOptions?: parseOptions): Node;

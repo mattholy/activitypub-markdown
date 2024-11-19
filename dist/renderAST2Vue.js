@@ -2,7 +2,6 @@ import { h } from 'vue';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
 export function renderAst2Vue(ast, options) {
-    console.log('renderAst2Vue-op', options);
     function renderNode(node, customRenderers, customComponents) {
         if (customRenderers) {
             switch (node.type) {
@@ -12,6 +11,9 @@ export function renderAst2Vue(ast, options) {
                     }
                     return h('div', { 'data-node-type': node.type, 'data-node-style': 'default' }, { default: () => (node.children || []).flatMap((i) => renderNode(i, customRenderers)) });
                 case 'inlineMath':
+                    if (customRenderers.inlineMath) {
+                        return customRenderers.inlineMath(node);
+                    }
                     try {
                         const html = katex.renderToString(node.value, {
                             throwOnError: false,
@@ -25,6 +27,9 @@ export function renderAst2Vue(ast, options) {
                         return h('span', { 'data-node-type': node.type }, node.value);
                     }
                 case 'math':
+                    if (customRenderers.math) {
+                        return customRenderers.math(node);
+                    }
                     try {
                         const html = katex.renderToString(node.value, {
                             throwOnError: false,
@@ -99,9 +104,7 @@ export function renderAst2Vue(ast, options) {
                     }
                     return h('br', { 'data-node-type': node.type, 'data-node-style': 'default' });
                 case 'link':
-                    console.log('处理LinkNode', customRenderers?.link);
                     if (customRenderers?.link) {
-                        console.log('处理LinkNode', '使用外部组件');
                         return customRenderers.link(node);
                     }
                     return h('a', { href: node.url, title: node.title, 'data-node-type': node.type, 'data-node-style': 'default' }, { default: () => (node.children || []).flatMap((i) => renderNode(i, customRenderers)) });

@@ -5,11 +5,6 @@ import remarkGfm from 'remark-gfm'
 import { Node } from 'unist'
 import { visit, SKIP } from 'unist-util-visit'
 
-interface MentionNode extends Node {
-  type: 'mention'
-  value: string
-}
-
 function mentionPlugin() {
   return (tree: Node) => {
     visit(tree, 'text', (node: any, index: number, parent: any) => {
@@ -59,7 +54,12 @@ function mentionPlugin() {
   }
 }
 
-export function parseMarkdown(markdownText: string): Node {
+
+export type parseOptions = {
+  doNotParseActivityPubMention?: boolean
+}
+
+export function parseMarkdown(markdownText: string, parseOptions?: parseOptions): Node {
   const processor = unified()
     .use(remarkParse)
     .use(remarkMath)
@@ -69,6 +69,15 @@ export function parseMarkdown(markdownText: string): Node {
   const ast = processor.parse(markdownText)
 
   const processedAst = processor.runSync(ast)
+  console.log('已经解析的树：', processedAst)
+  console.log('解析的选项：', parseOptions)
+  if (!parseOptions?.doNotParseActivityPubMention) {
+    console.log('解析ActivityPub Mention')
+    visit(processedAst, 'link', (node: Node) => {
+      console.log('link node:', node.data)
+      node.data
+    })
 
+  }
   return processedAst
 }

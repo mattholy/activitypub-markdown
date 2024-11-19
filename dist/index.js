@@ -1,2 +1,2 @@
 export { parseMarkdown } from './mdParser';
-export { renderAstToNaiveUI } from './renderMarkdownAST2NaiveUI';
+export { renderAst2Vue } from './renderAST2Vue';

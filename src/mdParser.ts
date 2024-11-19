@@ -1,6 +1,7 @@
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkMath from 'remark-math'
+import remarkGfm from 'remark-gfm'
 import { Node } from 'unist'
 import { visit, SKIP } from 'unist-util-visit'
 
@@ -12,22 +13,34 @@ interface MentionNode extends Node {
 function mentionPlugin() {
   return (tree: Node) => {
     visit(tree, 'text', (node: any, index: number, parent: any) => {
+      if (parent.type === 'link') {
+        return
+      }
+
       const mentionRegex = /@[\w.-]+(?:@(?:[\w-]+\.)+[a-zA-Z]{2,})?/g
       let match
       let lastIndex = 0
       const newNodes = []
 
       while ((match = mentionRegex.exec(node.value)) !== null) {
+        const isEmail = node.value.slice(Math.max(0, match.index - 7), match.index).toLowerCase() === 'mailto:'
         if (match.index > lastIndex) {
           newNodes.push({
             type: 'text',
             value: node.value.slice(lastIndex, match.index),
           })
         }
-        newNodes.push({
-          type: 'mention',
-          value: match[0],
-        })
+        if (!isEmail) {
+          newNodes.push({
+            type: 'mention',
+            value: match[0],
+          })
+        } else {
+          newNodes.push({
+            type: 'text',
+            value: match[0],
+          })
+        }
         lastIndex = match.index + match[0].length
       }
 
@@ -50,6 +63,7 @@ export function parseMarkdown(markdownText: string): Node {
   const processor = unified()
     .use(remarkParse)
     .use(remarkMath)
+    .use(remarkGfm)
     .use(mentionPlugin)
 
   const ast = processor.parse(markdownText)

@@ -1,6 +1,6 @@
 {
   "name": "@mattholy/apmd",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "An open-source, customizable Markdown parser and renderer for ActivityPub messages with Typescript.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
